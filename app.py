@@ -6,11 +6,11 @@ import os
 app = Flask(__name__)
 
 # Database connection details (use environment variables in production)
-DB_HOST = "ep-empty-sun-a4nlpq8w.us-east-1.pg.koyeb.app"
-DB_PORT = "5432"
-DB_USER = "koyeb-adm"
-DB_NAME = "music_streaming_db"
-DB_PASS = "npg_Kp4zWvQH8hms"
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_USER = os.getenv("DB_USER")
+DB_NAME = os.getenv("DB_NAME")
+DB_PASS = os.getenv("DB_PASS")
 
 # Function to connect to the database
 def get_db_connection():
