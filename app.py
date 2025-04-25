@@ -1,0 +1,65 @@
+from flask import Flask, request, jsonify
+import psycopg2
+from psycopg2 import sql
+import os
+
+app = Flask(__name__)
+
+# Database connection details (use environment variables in production)
+DB_HOST = "ep-empty-sun-a4nlpq8w.us-east-1.pg.koyeb.app"
+DB_PORT = "5432"
+DB_USER = "koyeb-adm"
+DB_NAME = "music_streaming_db"
+DB_PASS = "npg_Kp4zWvQH8hms"
+
+# Function to connect to the database
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            user=DB_USER,
+            password=DB_PASS,
+            database=DB_NAME
+        )
+        return conn
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        return None
+
+# API endpoint to execute SQL queries
+@app.route('/query', methods=['POST'])
+def execute_query():
+    try:
+        data = request.get_json()
+        query = data.get('query')
+        if not query:
+            return jsonify({"error": "No query provided"}), 400
+
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({"error": "Database connection failed"}), 500
+
+        cur = conn.cursor()
+        cur.execute(query)
+        if cur.description:  # If the query returns results (e.g., SELECT)
+            columns = [desc[0] for desc in cur.description]
+            results = cur.fetchall()
+            response = [dict(zip(columns, row)) for row in results]
+        else:  # For non-SELECT queries (e.g., INSERT, UPDATE)
+            conn.commit()
+            response = {"message": "Query executed successfully", "rows_affected": cur.rowcount}
+
+        cur.close()
+        conn.close()
+        return jsonify(response), 200
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            cur.close()
+            conn.close()
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
